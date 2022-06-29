@@ -22,6 +22,11 @@ namespace InvalidCharChecker.FileExplorer
                 callback_func(file);
             }
 
+            foreach(string dir in Directory.GetDirectories(path))
+            {
+                FileExplorer_c.Explore(dir, callback_func);
+            }
+
             return 0;
         }
 
