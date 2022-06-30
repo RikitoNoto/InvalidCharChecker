@@ -5,7 +5,9 @@ namespace InvalidCharCheckerTest
     [TestClass]
     public class FileExplorerTest
     {
-        private int m_callback_count = 0; // コールバック関数の呼び出された回数
+        private int m_callback_count = 0;                                   // コールバック関数の呼び出された回数
+        private List<string> m_callback_file_names = new List<string>();    // コールバック関数で呼び出されるファイル名リスト
+
         private const string WORKING_DIRECTORY_PATH = "temp";
         private static string working_dir = FileExplorerTest.getRootWorkingDirName();
         private static bool is_initialize = FileExplorerTest.initializeWorkingDir();
@@ -92,11 +94,18 @@ namespace InvalidCharCheckerTest
             Directory.SetCurrentDirectory(backup_dir);
         }
 
-        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count)
+        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string file_pattern = "", string except_dir_pattern = "")
+        {
+            checkExploreAndMakeTree(tree, expect_callback_count, new string[0], file_pattern, except_dir_pattern);
+        }
+
+        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string[] file_names, string file_pattern = "", string except_dir_pattern="")
         {
             this.makeTree(tree);
-            FileExplorer_c.Explore(tree.m_name, this.callbackSpy);
+            this.m_callback_file_names.AddRange(file_names);
+            FileExplorer_c.Explore(tree.m_name, this.callbackSpy, file_pattern, except_dir_pattern);
             Assert.AreEqual(expect_callback_count, this.m_callback_count);
+            Assert.AreEqual(0, this.m_callback_file_names.Count);
         }
 
         [TestInitialize]
@@ -108,6 +117,7 @@ namespace InvalidCharCheckerTest
             }
             Directory.SetCurrentDirectory(Path.Combine(FileExplorerTest.working_dir, WORKING_DIRECTORY_PATH));
             this.m_callback_count = 0;
+            this.m_callback_file_names.Clear();
         }
 
 
@@ -123,6 +133,7 @@ namespace InvalidCharCheckerTest
         private bool callbackSpy(string path)
         {
             this.m_callback_count++;
+            this.m_callback_file_names.Remove(path);
             return true;
         }
 
@@ -146,6 +157,20 @@ namespace InvalidCharCheckerTest
         public void ファイルが一つ存在するパスを受け取った時にコールバック関数を1回呼び出すこと()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new string[] { "test1"}), 1);
+        }
+
+        [TestMethod, TestCategory("Explore")]
+        public void コールバック関数の引数がパス名になっていること()
+        {
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new string[] { "test1" }), 1, new string[] { Path.Combine(getWorkingDirName(), "test1") });
+        }
+
+        [TestMethod, TestCategory("Explore")]
+        public void サブディレクトリからのコールバック関数の引数がパス名になっていること()
+        {
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {
+                                                new DIRECTORY_TREE("child", new string[]{"test1"})
+                                            }), 1, new string[] { Path.Combine(getWorkingDirName(), "child", "test1") });
         }
 
 
@@ -175,5 +200,64 @@ namespace InvalidCharCheckerTest
                                             }), 2);
         }
 
+        [TestMethod, TestCategory("Explore")]
+        public void ファイルパターンにヒットしないときにコールバック関数が呼び出されないこと()
+        {
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                  // root
+                                                new DIRECTORY_TREE("child1", new string[]{"test1"}, new DIRECTORY_TREE[] {  // child1
+                                                    new DIRECTORY_TREE("grandchild1", new string[]{"test2"})                // grand child1
+                                                })
+                                            }), 0, ".*\\.cpp");
+        }
+
+        [TestMethod, TestCategory("Explore")]
+        public void ディレクトリパターンにヒットしてもファイルパターンにヒットしないときにコールバック関数が呼び出されないこと()
+        {
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                  // root
+                                                new DIRECTORY_TREE("child1", new string[]{"test1"}, new DIRECTORY_TREE[] {  // child1
+                                                    new DIRECTORY_TREE("grandchild1", new string[]{"test2"})                // grand child1
+                                                })
+                                            }), 0, "child");
+        }
+
+        [TestMethod, TestCategory("Explore")]
+        public void ファイルパターンを渡して検索ができること()
+        {
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                  // root
+                                                new DIRECTORY_TREE("child1", new string[]{"test1.cpp"}, new DIRECTORY_TREE[] {  // child1
+                                                    new DIRECTORY_TREE("grandchild1", new string[]{"test2.c"})                // grand child1
+                                                })
+                                            }), 1, ".*\\.cpp");
+        }
+
+        [TestMethod, TestCategory("Explore")]
+        public void 対象外ディレクトリパターンにヒットするときにコールバック関数が呼び出されないこと()
+        {
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                     // root
+                                                new DIRECTORY_TREE("child1", new string[]{"match"}, new DIRECTORY_TREE[] {  // child1
+                                                    new DIRECTORY_TREE("grandchild11", new string[]{"match"}),              // grand child11
+                                                    new DIRECTORY_TREE("grandchild12", new string[]{"match"})               // grand child12
+                                                }),
+                                                new DIRECTORY_TREE("child2", new string[]{"ignore"}, new DIRECTORY_TREE[] { // child2
+                                                    new DIRECTORY_TREE("grandchild21", new string[]{"match"}),              // grand child21
+                                                    new DIRECTORY_TREE("grandchild22", new string[]{"ignore"})              // grand child22
+                                                })
+                                            }), 0, except_dir_pattern: "child");
+        }
+
+        [TestMethod, TestCategory("Explore")]
+        public void 対象外ディレクトリパターンにヒットしないときにコールバック関数が呼び出されること()
+        {
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                     // root
+                                                new DIRECTORY_TREE("child1", new string[]{"ignore"}, new DIRECTORY_TREE[] {  // child1
+                                                    new DIRECTORY_TREE("grandchild11", new string[]{"ignore"}),              // grand child11
+                                                    new DIRECTORY_TREE("grandchild12", new string[]{"ignore"})               // grand child12
+                                                }),
+                                                new DIRECTORY_TREE("child2", new string[]{"match"}, new DIRECTORY_TREE[] { // child2
+                                                    new DIRECTORY_TREE("grandchild21", new string[]{"ignore"}),              // grand child21
+                                                    new DIRECTORY_TREE("grandchild22", new string[]{"match"})              // grand child22
+                                                })
+                                            }), 2, except_dir_pattern: "child.*1");
+        }
     }
 }
