@@ -25,14 +25,23 @@ namespace InvalidCharCheckerTest
             {
             }
 
-            public DIRECTORY_TREE(string name, string[] files, DIRECTORY_TREE[] dirs)
+            public DIRECTORY_TREE(string name, string[] files, DIRECTORY_TREE[] dirs):this(name, files.ToDictionary<string, string>(name=>name), dirs)
+            {
+            }
+
+            public DIRECTORY_TREE(string name, Dictionary<string, string> files) : this(name, files, new DIRECTORY_TREE[0])
+            {
+            }
+
+            public DIRECTORY_TREE(string name, Dictionary<string, string> files, DIRECTORY_TREE[] dirs)
             {
                 this.m_name = name;
                 this.m_files = files;
                 this.m_dirs = dirs;
             }
+
             public string m_name;
-            public string[] m_files;
+            public Dictionary<string, string> m_files;
             public DIRECTORY_TREE[] m_dirs;
         }
 
@@ -80,9 +89,10 @@ namespace InvalidCharCheckerTest
             Directory.SetCurrentDirectory(tree.m_name);
 
             // ファイルの作成
-            foreach(string file in tree.m_files)
+            foreach(string file_name in tree.m_files.Keys)
             {
-                File.Create(file);
+                //File.Create(file_name);
+                File.WriteAllText(file_name, tree.m_files[file_name]);
             }
 
             // サブディレクトリの作成
@@ -94,16 +104,23 @@ namespace InvalidCharCheckerTest
             Directory.SetCurrentDirectory(backup_dir);
         }
 
-        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string file_pattern = "", string except_dir_pattern = "")
+        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string file_pattern = "", string except_dir_pattern = "", string content_pattern="")
         {
-            checkExploreAndMakeTree(tree, expect_callback_count, new string[0], file_pattern, except_dir_pattern);
+            checkExploreAndMakeTree(tree, expect_callback_count, new string[0], file_pattern, except_dir_pattern, content_pattern);
         }
 
-        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string[] file_names, string file_pattern = "", string except_dir_pattern="")
+        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string[] file_names, string file_pattern = "", string except_dir_pattern="", string content_pattern="")
         {
             this.makeTree(tree);
             this.m_callback_file_names.AddRange(file_names);
-            FileExplorer_c.Explore(tree.m_name, this.callbackSpy, file_pattern, except_dir_pattern);
+            if(content_pattern == "")
+            {
+                FileExplorer_c.Explore(tree.m_name, this.callbackSpy, file_pattern, except_dir_pattern);
+            }
+            else
+            {
+                FileExplorer_c.Explore(tree.m_name, this.callbackSpy, content_pattern, file_pattern, except_dir_pattern);
+            }
             Assert.AreEqual(expect_callback_count, this.m_callback_count);
             Assert.AreEqual(0, this.m_callback_file_names.Count);
         }
@@ -258,6 +275,18 @@ namespace InvalidCharCheckerTest
                                                     new DIRECTORY_TREE("grandchild22", new string[]{"match"})              // grand child22
                                                 })
                                             }), 2, except_dir_pattern: "child.*1");
+        }
+
+        [TestMethod, TestCategory("Explore")]
+        public void 正規表現パターンにヒットしない場合カウントしないこと()
+        {
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new Dictionary<string, string>() { {"file1", "content" } }), 0, content_pattern: "text");
+        }
+
+        [TestMethod, TestCategory("Explore")]
+        public void 正規表現パターンにヒットする場合カウントすること()
+        {
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new Dictionary<string, string>() { { "file1", "content" } }), 1, content_pattern: "c.n");
         }
     }
 }

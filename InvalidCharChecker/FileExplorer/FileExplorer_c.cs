@@ -10,9 +10,21 @@ namespace InvalidCharChecker.FileExplorer
     public class FileExplorer_c
     {
 
-        public static int Explore(string path, Func<string, bool> callback_func, string file_pattern="", string except_dir_pattern="")
+        public static int Explore(string path, Func<string, bool> callback_func, string content_pattern, string file_pattern="", string except_dir_pattern="")
         {
-            if(path == "")
+            Regex content_regex = new Regex(content_pattern);
+            return FileExplorer_c.Explore(path, delegate (string _path) {
+                    if (content_regex.IsMatch(File.ReadAllText(_path)))
+                    {
+                        return callback_func(_path);
+                    }
+                    return true;
+                }, file_pattern: file_pattern, except_dir_pattern: except_dir_pattern);
+        }
+
+        public static int Explore(string path, Func<string, bool> callback_func, string file_pattern = "", string except_dir_pattern = "")
+        {
+            if (path == "")
             {
                 return 0;
             }
@@ -21,9 +33,9 @@ namespace InvalidCharChecker.FileExplorer
             string[] files = Directory.GetFiles(path);
 
 
-            foreach(string file_path in files)
+            foreach (string file_path in files)
             {
-                if(file_regex.IsMatch(Path.GetFileName(file_path)))
+                if (file_regex.IsMatch(Path.GetFileName(file_path)))
                 {
                     callback_func(file_path);
                 }
@@ -31,7 +43,7 @@ namespace InvalidCharChecker.FileExplorer
 
             foreach (string dir_path in Directory.GetDirectories(path))
             {
-                if(except_dir_pattern=="" || !except_dir_regex.IsMatch(Path.GetFileName(dir_path)))
+                if (except_dir_pattern == "" || !except_dir_regex.IsMatch(Path.GetFileName(dir_path)))
                 {
                     FileExplorer_c.Explore(dir_path, callback_func, file_pattern, except_dir_pattern);
                 }
