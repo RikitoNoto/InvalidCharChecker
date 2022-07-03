@@ -11,6 +11,10 @@ namespace InvalidCharCheckerTest
         private const string WORKING_DIRECTORY_PATH = "temp";
         private static string working_dir = FileExplorerTest.getRootWorkingDirName();
         private static bool is_initialize = FileExplorerTest.initializeWorkingDir();
+
+        /// <summary>
+        ///     ディレクトリ構造を表す構造体
+        /// </summary>
         private struct DIRECTORY_TREE
         {
             public DIRECTORY_TREE(string name) : this(name, new string[0], new DIRECTORY_TREE[0])
@@ -40,11 +44,15 @@ namespace InvalidCharCheckerTest
                 this.m_dirs = dirs;
             }
 
-            public string m_name;
-            public Dictionary<string, string> m_files;
-            public DIRECTORY_TREE[] m_dirs;
+            public string m_name;                       // ディレクトリ名
+            public Dictionary<string, string> m_files;  // ディレクトリ内のファイル(key: ファイル名、content: ファイルの内容)
+            public DIRECTORY_TREE[] m_dirs;             // サブディレクトリ
         }
 
+
+        /// <summary>
+        ///     テスト時の作業用ディレクトリを作成するディレクトリを取得する。
+        /// </summary>
         private static string getRootWorkingDirName([System.Runtime.CompilerServices.CallerFilePath]string path="")
         {
             string? dir = Path.GetDirectoryName(path);
@@ -55,6 +63,11 @@ namespace InvalidCharCheckerTest
             return dir;
         }
 
+        /// <summary>
+        ///     テスト時の作業用ディレクトリを初期化する。
+        ///     前回テストで作成した内容のクリアをし、ディレクトリを新規作成する。
+        /// </summary>
+        /// <returns>初期化の完了状態</returns>
         private static bool initializeWorkingDir()
         {
             bool is_complete = false;
@@ -75,23 +88,27 @@ namespace InvalidCharCheckerTest
             return is_complete;
         }
 
+        /// <returns>作業ディレクトリのパス</returns>
         private static string getWorkingDirName([System.Runtime.CompilerServices.CallerMemberName] string path = "")
         {
             return path;
         }
 
+        /// <summary>
+        ///     引数のディレクトリツリーをもとに、実際のファイルシステム上にツリーを作成する。
+        /// </summary>
+        /// <param name="tree">作成するディレクトリツリー</param>
         private void makeTree(DIRECTORY_TREE tree)
         {
-            string backup_dir = Directory.GetCurrentDirectory();
+            string backup_dir = Directory.GetCurrentDirectory();    // 作業用に現在のディレクトリを変更するため、バックアップを取っておく
 
             // ディレクトリの作成
             Directory.CreateDirectory(tree.m_name);
-            Directory.SetCurrentDirectory(tree.m_name);
+            Directory.SetCurrentDirectory(tree.m_name); // 作成したディレクトリへ移動
 
             // ファイルの作成
             foreach(string file_name in tree.m_files.Keys)
             {
-                //File.Create(file_name);
                 File.WriteAllText(file_name, tree.m_files[file_name]);
             }
 
@@ -101,7 +118,7 @@ namespace InvalidCharCheckerTest
                 this.makeTree(child_tree);
             }
 
-            Directory.SetCurrentDirectory(backup_dir);
+            Directory.SetCurrentDirectory(backup_dir);  // 現在のディレクトリを復帰
         }
 
         private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string file_pattern = "", string except_dir_pattern = "", string content_pattern="")
@@ -109,10 +126,13 @@ namespace InvalidCharCheckerTest
             checkExploreAndMakeTree(tree, expect_callback_count, new string[0], file_pattern, except_dir_pattern, content_pattern);
         }
 
+        /// <summary>
+        ///     ディレクトリツリーを作成し、検索されたファイル数が一致しているかをチェックする。
+        /// </summary>
         private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string[] file_names, string file_pattern = "", string except_dir_pattern="", string content_pattern="")
         {
-            this.makeTree(tree);
-            this.m_callback_file_names.AddRange(file_names);
+            this.makeTree(tree);    // ツリーの作成
+            this.m_callback_file_names.AddRange(file_names);    // 呼び出しを期待するコールバック関数の引数リストを作成
             if(content_pattern == "")
             {
                 FileExplorer_c.Explore(tree.m_name, this.callbackSpy, file_pattern, except_dir_pattern);
@@ -121,8 +141,8 @@ namespace InvalidCharCheckerTest
             {
                 FileExplorer_c.Explore(tree.m_name, this.callbackSpy, content_pattern, file_pattern, except_dir_pattern);
             }
-            Assert.AreEqual(expect_callback_count, this.m_callback_count);
-            Assert.AreEqual(0, this.m_callback_file_names.Count);
+            Assert.AreEqual(expect_callback_count, this.m_callback_count);  // 期待した呼び出し回数になっていること
+            Assert.AreEqual(0, this.m_callback_file_names.Count);           // 引数リストがすべて消化されていること
         }
 
         [TestInitialize]
