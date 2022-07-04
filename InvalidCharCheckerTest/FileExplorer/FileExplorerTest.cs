@@ -1,19 +1,24 @@
+ï»¿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using InvalidCharChecker.FileExplorer;
+using System.Collections.Generic;
+using System.Linq;
+using System.IO;
 
 namespace InvalidCharCheckerTest
 {
     [TestClass]
     public class FileExplorerTest
     {
-        private int m_callback_count = 0;                                   // ƒR[ƒ‹ƒoƒbƒNŠÖ”‚ÌŒÄ‚Ño‚³‚ê‚½‰ñ”
-        private List<string> m_callback_file_names = new List<string>();    // ƒR[ƒ‹ƒoƒbƒNŠÖ”‚ÅŒÄ‚Ño‚³‚ê‚éƒtƒ@ƒCƒ‹–¼ƒŠƒXƒg
+        private int m_callback_count = 0;                                   // ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã®å‘¼ã³å‡ºã•ã‚ŒãŸå›æ•°
+        private List<string> m_callback_file_names = new List<string>();    // ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã§å‘¼ã³å‡ºã•ã‚Œã‚‹ãƒ•ã‚¡ã‚¤ãƒ«åãƒªã‚¹ãƒˆ
 
         private const string WORKING_DIRECTORY_PATH = "temp";
         private static string working_dir = FileExplorerTest.getRootWorkingDirName();
         private static bool is_initialize = FileExplorerTest.initializeWorkingDir();
 
         /// <summary>
-        ///     ƒfƒBƒŒƒNƒgƒŠ\‘¢‚ğ•\‚·\‘¢‘Ì
+        ///     ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªæ§‹é€ ã‚’è¡¨ã™æ§‹é€ ä½“
         /// </summary>
         private struct DIRECTORY_TREE
         {
@@ -22,14 +27,14 @@ namespace InvalidCharCheckerTest
             }
 
             public DIRECTORY_TREE(string name, string[] files) : this(name, files, new DIRECTORY_TREE[0])
-            {                
+            {
             }
 
             public DIRECTORY_TREE(string name, DIRECTORY_TREE[] dirs) : this(name, new string[0], dirs)
             {
             }
 
-            public DIRECTORY_TREE(string name, string[] files, DIRECTORY_TREE[] dirs):this(name, files.ToDictionary<string, string>(name=>name), dirs)
+            public DIRECTORY_TREE(string name, string[] files, DIRECTORY_TREE[] dirs) : this(name, files.ToDictionary<string, string>(_name => _name), dirs)
             {
             }
 
@@ -44,19 +49,19 @@ namespace InvalidCharCheckerTest
                 this.m_dirs = dirs;
             }
 
-            public string m_name;                       // ƒfƒBƒŒƒNƒgƒŠ–¼
-            public Dictionary<string, string> m_files;  // ƒfƒBƒŒƒNƒgƒŠ“à‚Ìƒtƒ@ƒCƒ‹(key: ƒtƒ@ƒCƒ‹–¼Acontent: ƒtƒ@ƒCƒ‹‚Ì“à—e)
-            public DIRECTORY_TREE[] m_dirs;             // ƒTƒuƒfƒBƒŒƒNƒgƒŠ
+            public string m_name;                       // ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå
+            public Dictionary<string, string> m_files;  // ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå†…ã®ãƒ•ã‚¡ã‚¤ãƒ«(key: ãƒ•ã‚¡ã‚¤ãƒ«åã€content: ãƒ•ã‚¡ã‚¤ãƒ«ã®å†…å®¹)
+            public DIRECTORY_TREE[] m_dirs;             // ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª
         }
 
 
         /// <summary>
-        ///     ƒeƒXƒg‚Ìì‹Æ—pƒfƒBƒŒƒNƒgƒŠ‚ğì¬‚·‚éƒfƒBƒŒƒNƒgƒŠ‚ğæ“¾‚·‚éB
+        ///     ãƒ†ã‚¹ãƒˆæ™‚ã®ä½œæ¥­ç”¨ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆã™ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’å–å¾—ã™ã‚‹ã€‚
         /// </summary>
-        private static string getRootWorkingDirName([System.Runtime.CompilerServices.CallerFilePath]string path="")
+        private static string getRootWorkingDirName([System.Runtime.CompilerServices.CallerFilePath] string path = "")
         {
-            string? dir = Path.GetDirectoryName(path);
-            if(dir == null)
+            string dir = Path.GetDirectoryName(path);
+            if (dir == null)
             {
                 dir = "C:";
             }
@@ -64,17 +69,17 @@ namespace InvalidCharCheckerTest
         }
 
         /// <summary>
-        ///     ƒeƒXƒg‚Ìì‹Æ—pƒfƒBƒŒƒNƒgƒŠ‚ğ‰Šú‰»‚·‚éB
-        ///     ‘O‰ñƒeƒXƒg‚Åì¬‚µ‚½“à—e‚ÌƒNƒŠƒA‚ğ‚µAƒfƒBƒŒƒNƒgƒŠ‚ğV‹Kì¬‚·‚éB
+        ///     ãƒ†ã‚¹ãƒˆæ™‚ã®ä½œæ¥­ç”¨ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’åˆæœŸåŒ–ã™ã‚‹ã€‚
+        ///     å‰å›ãƒ†ã‚¹ãƒˆã§ä½œæˆã—ãŸå†…å®¹ã®ã‚¯ãƒªã‚¢ã‚’ã—ã€ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’æ–°è¦ä½œæˆã™ã‚‹ã€‚
         /// </summary>
-        /// <returns>‰Šú‰»‚ÌŠ®—¹ó‘Ô</returns>
+        /// <returns>åˆæœŸåŒ–ã®å®Œäº†çŠ¶æ…‹</returns>
         private static bool initializeWorkingDir()
         {
             bool is_complete = false;
             try
             {
                 Directory.SetCurrentDirectory(FileExplorerTest.working_dir);
-                if(Directory.Exists(WORKING_DIRECTORY_PATH))
+                if (Directory.Exists(WORKING_DIRECTORY_PATH))
                 {
                     Directory.Delete(WORKING_DIRECTORY_PATH, true);
                 }
@@ -88,52 +93,52 @@ namespace InvalidCharCheckerTest
             return is_complete;
         }
 
-        /// <returns>ì‹ÆƒfƒBƒŒƒNƒgƒŠ‚ÌƒpƒX</returns>
+        /// <returns>ä½œæ¥­ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®ãƒ‘ã‚¹</returns>
         private static string getWorkingDirName([System.Runtime.CompilerServices.CallerMemberName] string path = "")
         {
             return path;
         }
 
         /// <summary>
-        ///     ˆø”‚ÌƒfƒBƒŒƒNƒgƒŠƒcƒŠ[‚ğ‚à‚Æ‚ÉAÀÛ‚Ìƒtƒ@ƒCƒ‹ƒVƒXƒeƒ€ã‚ÉƒcƒŠ[‚ğì¬‚·‚éB
+        ///     å¼•æ•°ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ„ãƒªãƒ¼ã‚’ã‚‚ã¨ã«ã€å®Ÿéš›ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚·ã‚¹ãƒ†ãƒ ä¸Šã«ãƒ„ãƒªãƒ¼ã‚’ä½œæˆã™ã‚‹ã€‚
         /// </summary>
-        /// <param name="tree">ì¬‚·‚éƒfƒBƒŒƒNƒgƒŠƒcƒŠ[</param>
+        /// <param name="tree">ä½œæˆã™ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ„ãƒªãƒ¼</param>
         private void makeTree(DIRECTORY_TREE tree)
         {
-            string backup_dir = Directory.GetCurrentDirectory();    // ì‹Æ—p‚ÉŒ»İ‚ÌƒfƒBƒŒƒNƒgƒŠ‚ğ•ÏX‚·‚é‚½‚ßAƒoƒbƒNƒAƒbƒv‚ğæ‚Á‚Ä‚¨‚­
+            string backup_dir = Directory.GetCurrentDirectory();    // ä½œæ¥­ç”¨ã«ç¾åœ¨ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’å¤‰æ›´ã™ã‚‹ãŸã‚ã€ãƒãƒƒã‚¯ã‚¢ãƒƒãƒ—ã‚’å–ã£ã¦ãŠã
 
-            // ƒfƒBƒŒƒNƒgƒŠ‚Ìì¬
+            // ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®ä½œæˆ
             Directory.CreateDirectory(tree.m_name);
-            Directory.SetCurrentDirectory(tree.m_name); // ì¬‚µ‚½ƒfƒBƒŒƒNƒgƒŠ‚ÖˆÚ“®
+            Directory.SetCurrentDirectory(tree.m_name); // ä½œæˆã—ãŸãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã¸ç§»å‹•
 
-            // ƒtƒ@ƒCƒ‹‚Ìì¬
-            foreach(string file_name in tree.m_files.Keys)
+            // ãƒ•ã‚¡ã‚¤ãƒ«ã®ä½œæˆ
+            foreach (string file_name in tree.m_files.Keys)
             {
                 File.WriteAllText(file_name, tree.m_files[file_name]);
             }
 
-            // ƒTƒuƒfƒBƒŒƒNƒgƒŠ‚Ìì¬
-            foreach(DIRECTORY_TREE child_tree in tree.m_dirs)
+            // ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®ä½œæˆ
+            foreach (DIRECTORY_TREE child_tree in tree.m_dirs)
             {
                 this.makeTree(child_tree);
             }
 
-            Directory.SetCurrentDirectory(backup_dir);  // Œ»İ‚ÌƒfƒBƒŒƒNƒgƒŠ‚ğ•œ‹A
+            Directory.SetCurrentDirectory(backup_dir);  // ç¾åœ¨ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’å¾©å¸°
         }
 
-        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string file_pattern = "", string except_dir_pattern = "", string content_pattern="")
+        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string file_pattern = "", string except_dir_pattern = "", string content_pattern = "")
         {
             checkExploreAndMakeTree(tree, expect_callback_count, new string[0], file_pattern, except_dir_pattern, content_pattern);
         }
 
         /// <summary>
-        ///     ƒfƒBƒŒƒNƒgƒŠƒcƒŠ[‚ğì¬‚µAŒŸõ‚³‚ê‚½ƒtƒ@ƒCƒ‹”‚ªˆê’v‚µ‚Ä‚¢‚é‚©‚ğƒ`ƒFƒbƒN‚·‚éB
+        ///     ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ„ãƒªãƒ¼ã‚’ä½œæˆã—ã€æ¤œç´¢ã•ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«æ•°ãŒä¸€è‡´ã—ã¦ã„ã‚‹ã‹ã‚’ãƒã‚§ãƒƒã‚¯ã™ã‚‹ã€‚
         /// </summary>
-        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string[] file_names, string file_pattern = "", string except_dir_pattern="", string content_pattern="")
+        private void checkExploreAndMakeTree(DIRECTORY_TREE tree, int expect_callback_count, string[] file_names, string file_pattern = "", string except_dir_pattern = "", string content_pattern = "")
         {
-            this.makeTree(tree);    // ƒcƒŠ[‚Ìì¬
-            this.m_callback_file_names.AddRange(file_names);    // ŒÄ‚Ño‚µ‚ğŠú‘Ò‚·‚éƒR[ƒ‹ƒoƒbƒNŠÖ”‚Ìˆø”ƒŠƒXƒg‚ğì¬
-            if(content_pattern == "")
+            this.makeTree(tree);    // ãƒ„ãƒªãƒ¼ã®ä½œæˆ
+            this.m_callback_file_names.AddRange(file_names);    // å‘¼ã³å‡ºã—ã‚’æœŸå¾…ã™ã‚‹ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã®å¼•æ•°ãƒªã‚¹ãƒˆã‚’ä½œæˆ
+            if (content_pattern == "")
             {
                 FileExplorer_c.Explore(tree.m_name, this.callbackSpy, file_pattern, except_dir_pattern);
             }
@@ -141,14 +146,14 @@ namespace InvalidCharCheckerTest
             {
                 FileExplorer_c.Explore(tree.m_name, this.callbackSpy, content_pattern, file_pattern, except_dir_pattern);
             }
-            Assert.AreEqual(expect_callback_count, this.m_callback_count);  // Šú‘Ò‚µ‚½ŒÄ‚Ño‚µ‰ñ”‚É‚È‚Á‚Ä‚¢‚é‚±‚Æ
-            Assert.AreEqual(0, this.m_callback_file_names.Count);           // ˆø”ƒŠƒXƒg‚ª‚·‚×‚ÄÁ‰»‚³‚ê‚Ä‚¢‚é‚±‚Æ
+            Assert.AreEqual(expect_callback_count, this.m_callback_count);  // æœŸå¾…ã—ãŸå‘¼ã³å‡ºã—å›æ•°ã«ãªã£ã¦ã„ã‚‹ã“ã¨
+            Assert.AreEqual(0, this.m_callback_file_names.Count);           // å¼•æ•°ãƒªã‚¹ãƒˆãŒã™ã¹ã¦æ¶ˆåŒ–ã•ã‚Œã¦ã„ã‚‹ã“ã¨
         }
 
         [TestInitialize]
         public void setUp()
         {
-            if((!is_initialize) && (!initializeWorkingDir()))
+            if ((!is_initialize) && (!initializeWorkingDir()))
             {
                 Assert.Fail();
             }
@@ -161,9 +166,9 @@ namespace InvalidCharCheckerTest
         [TestCleanup]
         public void tearDown()
         {
-            //FIXME: ƒeƒXƒg‚²‚Æ‚Éì‹ÆƒfƒBƒŒƒNƒgƒŠ‚Ìì¬‚Æíœ‚ğs‚¤‚ÆA—áŠO‚ª”­¶‚·‚éB
-            //       File.Create‚ğ‚·‚é‚ÆƒvƒƒZƒX‚ª•¡”‚Å‚«‚é‚æ‚¤‚ÅAƒeƒXƒgŒã‚àƒvƒƒZƒX‚ªƒfƒBƒŒƒNƒgƒŠ‚ÉƒAƒNƒZƒX‚µ‘±‚¯‚é‚½‚ß
-            //       ƒfƒBƒŒƒNƒgƒŠ‚Ìíœ‚ª‚Å‚«‚È‚¢B
+            //FIXME: ãƒ†ã‚¹ãƒˆã”ã¨ã«ä½œæ¥­ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®ä½œæˆã¨å‰Šé™¤ã‚’è¡Œã†ã¨ã€ä¾‹å¤–ãŒç™ºç”Ÿã™ã‚‹ã€‚
+            //       File.Createã‚’ã™ã‚‹ã¨ãƒ—ãƒ­ã‚»ã‚¹ãŒè¤‡æ•°ã§ãã‚‹ã‚ˆã†ã§ã€ãƒ†ã‚¹ãƒˆå¾Œã‚‚ãƒ—ãƒ­ã‚»ã‚¹ãŒãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã«ã‚¢ã‚¯ã‚»ã‚¹ã—ç¶šã‘ã‚‹ãŸã‚
+            //       ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®å‰Šé™¤ãŒã§ããªã„ã€‚
             //Directory.Delete(WORKING_DIRECTORY_PATH,true);
         }
 
@@ -176,7 +181,7 @@ namespace InvalidCharCheckerTest
 
 
         [TestMethod, TestCategory("Explore")]
-        public void ‹ó‚Ì•¶š—ñ‚ğó‚¯æ‚Á‚½‚ÉƒR[ƒ‹ƒoƒbƒNŠÖ”‚ğŒÄ‚Ño‚³‚È‚¢‚±‚Æ()
+        public void ç©ºã®æ–‡å­—åˆ—ã‚’å—ã‘å–ã£ãŸæ™‚ã«ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã‚’å‘¼ã³å‡ºã•ãªã„ã“ã¨()
         {
             FileExplorer_c.Explore("", this.callbackSpy);
             Assert.AreEqual(0, this.m_callback_count);
@@ -184,26 +189,26 @@ namespace InvalidCharCheckerTest
 
 
         [TestMethod, TestCategory("Explore")]
-        public void ‹ó‚ÌƒpƒX‚ğó‚¯æ‚Á‚½‚ÉƒR[ƒ‹ƒoƒbƒNŠÖ”‚ğŒÄ‚Ño‚³‚È‚¢‚±‚Æ()
+        public void ç©ºã®ãƒ‘ã‚¹ã‚’å—ã‘å–ã£ãŸæ™‚ã«ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã‚’å‘¼ã³å‡ºã•ãªã„ã“ã¨()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName()), 0);
         }
 
 
         [TestMethod, TestCategory("Explore")]
-        public void ƒtƒ@ƒCƒ‹‚ªˆê‚Â‘¶İ‚·‚éƒpƒX‚ğó‚¯æ‚Á‚½‚ÉƒR[ƒ‹ƒoƒbƒNŠÖ”‚ğ1‰ñŒÄ‚Ño‚·‚±‚Æ()
+        public void ãƒ•ã‚¡ã‚¤ãƒ«ãŒä¸€ã¤å­˜åœ¨ã™ã‚‹ãƒ‘ã‚¹ã‚’å—ã‘å–ã£ãŸæ™‚ã«ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã‚’1å›å‘¼ã³å‡ºã™ã“ã¨()
         {
-            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new string[] { "test1"}), 1);
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new string[] { "test1" }), 1);
         }
 
         [TestMethod, TestCategory("Explore")]
-        public void ƒR[ƒ‹ƒoƒbƒNŠÖ”‚Ìˆø”‚ªƒpƒX–¼‚É‚È‚Á‚Ä‚¢‚é‚±‚Æ()
+        public void ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã®å¼•æ•°ãŒãƒ‘ã‚¹åã«ãªã£ã¦ã„ã‚‹ã“ã¨()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new string[] { "test1" }), 1, new string[] { Path.Combine(getWorkingDirName(), "test1") });
         }
 
         [TestMethod, TestCategory("Explore")]
-        public void ƒTƒuƒfƒBƒŒƒNƒgƒŠ‚©‚ç‚ÌƒR[ƒ‹ƒoƒbƒNŠÖ”‚Ìˆø”‚ªƒpƒX–¼‚É‚È‚Á‚Ä‚¢‚é‚±‚Æ()
+        public void ã‚µãƒ–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‹ã‚‰ã®ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã®å¼•æ•°ãŒãƒ‘ã‚¹åã«ãªã£ã¦ã„ã‚‹ã“ã¨()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {
                                                 new DIRECTORY_TREE("child", new string[]{"test1"})
@@ -212,25 +217,25 @@ namespace InvalidCharCheckerTest
 
 
         [TestMethod, TestCategory("Explore")]
-        public void ƒtƒ@ƒCƒ‹‚ª“ñ‚Â‘¶İ‚·‚éƒpƒX‚ğó‚¯æ‚Á‚½‚ÉƒR[ƒ‹ƒoƒbƒNŠÖ”‚ğ2‰ñŒÄ‚Ño‚·‚±‚Æ()
+        public void ãƒ•ã‚¡ã‚¤ãƒ«ãŒäºŒã¤å­˜åœ¨ã™ã‚‹ãƒ‘ã‚¹ã‚’å—ã‘å–ã£ãŸæ™‚ã«ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ã‚’2å›å‘¼ã³å‡ºã™ã“ã¨()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new string[] { "test1", "test2" }), 2);
         }
 
 
         [TestMethod, TestCategory("Explore")]
-        public void Ä‹A“I‚ÉƒfƒBƒŒƒNƒgƒŠ‚ÌŒŸõ‚ğs‚Á‚Ä‚¢‚é‚±‚Æ_1ŠK‘w1ƒtƒ@ƒCƒ‹()
+        public void å†å¸°çš„ã«ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®æ¤œç´¢ã‚’è¡Œã£ã¦ã„ã‚‹ã“ã¨_1éšå±¤1ãƒ•ã‚¡ã‚¤ãƒ«()
         {
-            this.checkExploreAndMakeTree(   new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                // root
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                // root
                                                 new DIRECTORY_TREE("child1", new string[]{"test1"})                     // child1
                                             }), 1);
         }
 
 
         [TestMethod, TestCategory("Explore")]
-        public void Ä‹A“I‚ÉƒfƒBƒŒƒNƒgƒŠ‚ÌŒŸõ‚ğs‚Á‚Ä‚¢‚é‚±‚Æ_2ŠK‘w1ƒtƒ@ƒCƒ‹‚¸‚Â()
+        public void å†å¸°çš„ã«ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã®æ¤œç´¢ã‚’è¡Œã£ã¦ã„ã‚‹ã“ã¨_2éšå±¤1ãƒ•ã‚¡ã‚¤ãƒ«ãšã¤()
         {
-            this.checkExploreAndMakeTree(   new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                  // root
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                  // root
                                                 new DIRECTORY_TREE("child1", new string[]{"test1"}, new DIRECTORY_TREE[] {  // child1
                                                     new DIRECTORY_TREE("grandchild1", new string[]{"test2"})                // grand child1
                                                 })
@@ -238,7 +243,7 @@ namespace InvalidCharCheckerTest
         }
 
         [TestMethod, TestCategory("Explore")]
-        public void ƒtƒ@ƒCƒ‹ƒpƒ^[ƒ“‚Éƒqƒbƒg‚µ‚È‚¢‚Æ‚«‚ÉƒR[ƒ‹ƒoƒbƒNŠÖ”‚ªŒÄ‚Ño‚³‚ê‚È‚¢‚±‚Æ()
+        public void ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¿ãƒ¼ãƒ³ã«ãƒ’ãƒƒãƒˆã—ãªã„ã¨ãã«ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ãŒå‘¼ã³å‡ºã•ã‚Œãªã„ã“ã¨()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                  // root
                                                 new DIRECTORY_TREE("child1", new string[]{"test1"}, new DIRECTORY_TREE[] {  // child1
@@ -248,7 +253,7 @@ namespace InvalidCharCheckerTest
         }
 
         [TestMethod, TestCategory("Explore")]
-        public void ƒfƒBƒŒƒNƒgƒŠƒpƒ^[ƒ“‚Éƒqƒbƒg‚µ‚Ä‚àƒtƒ@ƒCƒ‹ƒpƒ^[ƒ“‚Éƒqƒbƒg‚µ‚È‚¢‚Æ‚«‚ÉƒR[ƒ‹ƒoƒbƒNŠÖ”‚ªŒÄ‚Ño‚³‚ê‚È‚¢‚±‚Æ()
+        public void ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ‘ã‚¿ãƒ¼ãƒ³ã«ãƒ’ãƒƒãƒˆã—ã¦ã‚‚ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¿ãƒ¼ãƒ³ã«ãƒ’ãƒƒãƒˆã—ãªã„ã¨ãã«ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ãŒå‘¼ã³å‡ºã•ã‚Œãªã„ã“ã¨()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                  // root
                                                 new DIRECTORY_TREE("child1", new string[]{"test1"}, new DIRECTORY_TREE[] {  // child1
@@ -258,7 +263,7 @@ namespace InvalidCharCheckerTest
         }
 
         [TestMethod, TestCategory("Explore")]
-        public void ƒtƒ@ƒCƒ‹ƒpƒ^[ƒ“‚ğ“n‚µ‚ÄŒŸõ‚ª‚Å‚«‚é‚±‚Æ()
+        public void ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¿ãƒ¼ãƒ³ã‚’æ¸¡ã—ã¦æ¤œç´¢ãŒã§ãã‚‹ã“ã¨()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                  // root
                                                 new DIRECTORY_TREE("child1", new string[]{"test1.cpp"}, new DIRECTORY_TREE[] {  // child1
@@ -268,7 +273,7 @@ namespace InvalidCharCheckerTest
         }
 
         [TestMethod, TestCategory("Explore")]
-        public void ‘ÎÛŠOƒfƒBƒŒƒNƒgƒŠƒpƒ^[ƒ“‚Éƒqƒbƒg‚·‚é‚Æ‚«‚ÉƒR[ƒ‹ƒoƒbƒNŠÖ”‚ªŒÄ‚Ño‚³‚ê‚È‚¢‚±‚Æ()
+        public void å¯¾è±¡å¤–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ‘ã‚¿ãƒ¼ãƒ³ã«ãƒ’ãƒƒãƒˆã™ã‚‹ã¨ãã«ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ãŒå‘¼ã³å‡ºã•ã‚Œãªã„ã“ã¨()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                     // root
                                                 new DIRECTORY_TREE("child1", new string[]{"match"}, new DIRECTORY_TREE[] {  // child1
@@ -283,7 +288,7 @@ namespace InvalidCharCheckerTest
         }
 
         [TestMethod, TestCategory("Explore")]
-        public void ‘ÎÛŠOƒfƒBƒŒƒNƒgƒŠƒpƒ^[ƒ“‚Éƒqƒbƒg‚µ‚È‚¢‚Æ‚«‚ÉƒR[ƒ‹ƒoƒbƒNŠÖ”‚ªŒÄ‚Ño‚³‚ê‚é‚±‚Æ()
+        public void å¯¾è±¡å¤–ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ‘ã‚¿ãƒ¼ãƒ³ã«ãƒ’ãƒƒãƒˆã—ãªã„ã¨ãã«ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°ãŒå‘¼ã³å‡ºã•ã‚Œã‚‹ã“ã¨()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new DIRECTORY_TREE[] {                     // root
                                                 new DIRECTORY_TREE("child1", new string[]{"ignore"}, new DIRECTORY_TREE[] {  // child1
@@ -298,13 +303,13 @@ namespace InvalidCharCheckerTest
         }
 
         [TestMethod, TestCategory("Explore")]
-        public void ³‹K•\Œ»ƒpƒ^[ƒ“‚Éƒqƒbƒg‚µ‚È‚¢ê‡ƒJƒEƒ“ƒg‚µ‚È‚¢‚±‚Æ()
+        public void æ­£è¦è¡¨ç¾ãƒ‘ã‚¿ãƒ¼ãƒ³ã«ãƒ’ãƒƒãƒˆã—ãªã„å ´åˆã‚«ã‚¦ãƒ³ãƒˆã—ãªã„ã“ã¨()
         {
-            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new Dictionary<string, string>() { {"file1", "content" } }), 0, content_pattern: "text");
+            this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new Dictionary<string, string>() { { "file1", "content" } }), 0, content_pattern: "text");
         }
 
         [TestMethod, TestCategory("Explore")]
-        public void ³‹K•\Œ»ƒpƒ^[ƒ“‚Éƒqƒbƒg‚·‚éê‡ƒJƒEƒ“ƒg‚·‚é‚±‚Æ()
+        public void æ­£è¦è¡¨ç¾ãƒ‘ã‚¿ãƒ¼ãƒ³ã«ãƒ’ãƒƒãƒˆã™ã‚‹å ´åˆã‚«ã‚¦ãƒ³ãƒˆã™ã‚‹ã“ã¨()
         {
             this.checkExploreAndMakeTree(new DIRECTORY_TREE(getWorkingDirName(), new Dictionary<string, string>() { { "file1", "content" } }), 1, content_pattern: "c.n");
         }

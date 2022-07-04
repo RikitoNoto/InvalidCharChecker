@@ -3,15 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvalidCharChecker", "InvalidCharChecker\InvalidCharChecker.csproj", "{EFB687FB-F1C1-46AB-BE25-0E712647FBB2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvalidCharChecker", "InvalidCharChecker\InvalidCharChecker.csproj", "{55ADD075-D21F-41C4-B5FF-0852B605EDC9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvalidCharCheckerTest", "InvalidCharCheckerTest\InvalidCharCheckerTest.csproj", "{723CBCF2-758D-4FF4-921D-CDA835298179}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ソリューション項目", "ソリューション項目", "{4BAFFB41-DA56-495F-8265-1F4AADD49D0E}"
-	ProjectSection(SolutionItems) = preProject
-		.gitignore = .gitignore
-		LICENSE = LICENSE
-		README.md = README.md
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvalidCharCheckerTest", "InvalidCharCheckerTest\InvalidCharCheckerTest.csproj", "{B2E31415-C0F6-4CE2-B8BA-5E802C781AEA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{55ADD075-D21F-41C4-B5FF-0852B605EDC9} = {55ADD075-D21F-41C4-B5FF-0852B605EDC9}
 	EndProjectSection
 EndProject
 Global
@@ -20,19 +16,19 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{EFB687FB-F1C1-46AB-BE25-0E712647FBB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EFB687FB-F1C1-46AB-BE25-0E712647FBB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EFB687FB-F1C1-46AB-BE25-0E712647FBB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EFB687FB-F1C1-46AB-BE25-0E712647FBB2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{723CBCF2-758D-4FF4-921D-CDA835298179}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{723CBCF2-758D-4FF4-921D-CDA835298179}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{723CBCF2-758D-4FF4-921D-CDA835298179}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{723CBCF2-758D-4FF4-921D-CDA835298179}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55ADD075-D21F-41C4-B5FF-0852B605EDC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55ADD075-D21F-41C4-B5FF-0852B605EDC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55ADD075-D21F-41C4-B5FF-0852B605EDC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55ADD075-D21F-41C4-B5FF-0852B605EDC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2E31415-C0F6-4CE2-B8BA-5E802C781AEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2E31415-C0F6-4CE2-B8BA-5E802C781AEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2E31415-C0F6-4CE2-B8BA-5E802C781AEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2E31415-C0F6-4CE2-B8BA-5E802C781AEA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {EF896913-1275-4642-88B1-18C21D564CB0}
+		SolutionGuid = {FDE7FBB7-605C-4349-9D4F-F9FA28C796F8}
 	EndGlobalSection
 EndGlobal

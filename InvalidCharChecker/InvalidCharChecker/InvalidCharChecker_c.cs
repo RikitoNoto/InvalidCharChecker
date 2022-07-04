@@ -15,9 +15,9 @@ namespace InvalidCharChecker.InvalidCharChecker
         static public string[] searchInvalidChar(string path, string file_pattern="", string except_dir_pattern="")
         {
             List<string> result = new List<string>();
-            FileExplorer_c.Explore(path, delegate (string path)
+            FileExplorer_c.Explore(path, delegate (string _path)
                 {
-                    result.Add(path);
+                    result.Add(_path);
                     return true;
                 }, INVALID_PATTERN, file_pattern, except_dir_pattern);
 
